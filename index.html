@@ -1,6 +1,118 @@
-<link rel="manifest" href="manifest.json">
-<script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('service-worker.js');
-}
-</script>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gộp Ảnh 2×5</title>
+    <link rel="manifest" href="manifest.json">
+    <style>
+        body {
+            font-family: "Segoe UI", sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 0;
+            padding: 20px;
+            background: #f0f0f0;
+        }
+        h1 {
+            text-align: center;
+            color: #4CAF50;
+        }
+        #preview {
+            margin-top: 20px;
+            border: 2px solid #4CAF50;
+            width: 400px;
+            height: 310px;
+            object-fit: contain;
+        }
+        button {
+            font-size: 16px;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        input[type=file] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧩 Gộp Ảnh 2×5</h1>
+
+    <label for="fileInput">
+        <button>📂 Chọn ảnh (tối đa 10)</button>
+    </label>
+    <input type="file" id="fileInput" accept="image/*" multiple>
+
+    <button id="downloadBtn" style="display:none;">💾 Tải ảnh về</button>
+    <canvas id="canvas" width="2250" height="1750" style="display:none;"></canvas>
+    <img id="preview" alt="Preview ảnh ghép">
+
+    <script>
+        const fileInput = document.getElementById('fileInput');
+        const canvas = document.getElementById('canvas');
+        const preview = document.getElementById('preview');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const ctx = canvas.getContext('2d');
+
+        fileInput.addEventListener('change', () => {
+            const files = Array.from(fileInput.files).slice(0,10);
+            if(files.length === 0) return;
+
+            const cols = 5;
+            const rows = 2;
+            const totalWidth = canvas.width;
+            const totalHeight = canvas.height;
+            const cellWidth = totalWidth / cols;
+            const cellHeight = totalHeight / rows;
+
+            ctx.clearRect(0,0,totalWidth,totalHeight);
+
+            let loadedCount = 0;
+            files.forEach((file, index) => {
+                const img = new Image();
+                img.onload = () => {
+                    // resize image để vừa cell
+                    const scale = Math.min(cellWidth / img.width, cellHeight / img.height);
+                    const w = img.width * scale;
+                    const h = img.height * scale;
+                    const x = (index % cols) * cellWidth + (cellWidth - w)/2;
+                    const y = Math.floor(index / cols) * cellHeight + (cellHeight - h)/2;
+                    ctx.drawImage(img, x, y, w, h);
+
+                    loadedCount++;
+                    if(loadedCount === files.length) {
+                        // hiện preview
+                        preview.src = canvas.toDataURL("image/jpeg", 0.95);
+                        downloadBtn.style.display = "inline-block";
+                    }
+                };
+                img.src = URL.createObjectURL(file);
+            });
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.href = canvas.toDataURL("image/jpeg",0.95);
+            link.download = 'merged.jpg';
+            link.click();
+        });
+    </script>
+
+    <script>
+        if('serviceWorker' in navigator){
+            navigator.serviceWorker.register('service-worker.js')
+            .then(()=>console.log('Service Worker registered'))
+            .catch(err=>console.log(err));
+        }
+    </script>
+</body>
+</html>

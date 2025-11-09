@@ -5,51 +5,42 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Merge 2×5 Images</title>
 <style>
-    body {
-        font-family: "Segoe UI", sans-serif;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        margin: 0;
-        padding: 20px;
-        background: #f0f0f0;
-    }
-    h1 {
-        text-align: center;
-        color: #4CAF50;
-    }
-    #preview {
-        margin-top: 20px;
-        border: 2px solid #4CAF50;
-        width: 400px;
-        height: 310px;
-        object-fit: contain;
-    }
-    button {
-        font-size: 16px;
-        padding: 10px 20px;
-        margin: 10px;
-        cursor: pointer;
-        background: #4CAF50;
-        color: white;
-        border: none;
-        border-radius: 5px;
-    }
-    button:hover {
-        background: #45a049;
-    }
-    input[type=file] {
-        display: none;
-    }
+body {
+    font-family: "Segoe UI", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 20px;
+    background: #f0f0f0;
+}
+h1 { text-align: center; color: #4CAF50; }
+#preview {
+    margin-top: 20px;
+    border: 2px solid #4CAF50;
+    width: 400px;
+    height: 310px;
+    object-fit: contain;
+}
+button {
+    font-size: 16px;
+    padding: 10px 20px;
+    margin: 10px;
+    cursor: pointer;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+}
+button:hover { background: #45a049; }
 </style>
 </head>
 <body>
+
 <h1>🧩 Merge 2×5 Images</h1>
 
-<label for="fileInput">
-    <button>📂 Choose Images (Max 10)</button>
-</label>
-<input type="file" id="fileInput" accept="image/*" multiple>
+<button id="chooseBtn">📂 Choose Images (Max 10)</button>
+<input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
 
 <button id="downloadBtn" style="display:none;">💾 Download Merged Image</button>
 
@@ -57,11 +48,14 @@
 <img id="preview" alt="Preview of merged image">
 
 <script>
+const chooseBtn = document.getElementById('chooseBtn');
 const fileInput = document.getElementById('fileInput');
 const canvas = document.getElementById('canvas');
 const preview = document.getElementById('preview');
 const downloadBtn = document.getElementById('downloadBtn');
 const ctx = canvas.getContext('2d');
+
+chooseBtn.addEventListener('click', () => fileInput.click());
 
 fileInput.addEventListener('change', () => {
     const files = Array.from(fileInput.files).slice(0,10);
@@ -104,5 +98,6 @@ downloadBtn.addEventListener('click', () => {
     link.click();
 });
 </script>
+
 </body>
 </html>

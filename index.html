@@ -4,6 +4,12 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Merge 2×5 Images</title>
+
+<!-- Favicon & PWA icon -->
+<link rel="icon" href="ico.png" type="image/png">
+<link rel="apple-touch-icon" href="ico.png">
+<link rel="manifest" href="manifest.json">
+
 <style>
 body {
     font-family: "Segoe UI", sans-serif;
@@ -25,7 +31,7 @@ h1 { text-align: center; color: #4CAF50; }
 button {
     font-size: 16px;
     padding: 10px 20px;
-    margin: 10px;
+    margin: 5px;
     cursor: pointer;
     background: #4CAF50;
     color: white;
@@ -33,68 +39,111 @@ button {
     border-radius: 5px;
 }
 button:hover { background: #45a049; }
+input[type=file] { display:none; }
+#chooseContainer { display:flex; flex-wrap:wrap; justify-content:center; max-width:420px; }
 </style>
 </head>
 <body>
 
-<h1>🧩 Merge 2×5 Images</h1>
+<h1>🧩 Merge Images H06</h1>
 
-<button id="chooseBtn">📂 Choose Images (Max 10)</button>
-<input type="file" id="fileInput" accept="image/*" multiple style="display:none;">
-
+<div id="chooseContainer"></div>
 <button id="downloadBtn" style="display:none;">💾 Download Merged Image</button>
 
 <canvas id="canvas" width="2250" height="1750" style="display:none;"></canvas>
 <img id="preview" alt="Preview of merged image">
 
 <script>
-const chooseBtn = document.getElementById('chooseBtn');
-const fileInput = document.getElementById('fileInput');
+const chooseContainer = document.getElementById('chooseContainer');
 const canvas = document.getElementById('canvas');
 const preview = document.getElementById('preview');
 const downloadBtn = document.getElementById('downloadBtn');
 const ctx = canvas.getContext('2d');
 
-chooseBtn.addEventListener('click', () => fileInput.click());
+const images = new Array(10).fill(null);
 
-fileInput.addEventListener('change', () => {
-    const files = Array.from(fileInput.files).slice(0,10);
-    if(files.length === 0) return;
+// Detect iOS
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+if(isIOS){
+    // iOS: 10 separate file inputs
+    for(let i=0;i<10;i++){
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.id = 'fileInput'+i;
+
+        const btn = document.createElement('button');
+        btn.textContent = '📂 Choose Image '+(i+1);
+        btn.addEventListener('click',()=>input.click());
+
+        input.addEventListener('change',()=>{
+            const file = input.files[0];
+            if(file){
+                const img = new Image();
+                img.onload = () => { images[i]=img; drawPreview(); };
+                img.src = URL.createObjectURL(file);
+            }
+        });
+
+        chooseContainer.appendChild(btn);
+        chooseContainer.appendChild(input);
+    }
+}else{
+    // Android/Desktop: single multiple file input
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.multiple = true;
+    input.id = 'fileInputMulti';
+    input.style.display='none';
+
+    const btn = document.createElement('button');
+    btn.textContent = '📂 Choose Images (Max 10)';
+    btn.addEventListener('click',()=>input.click());
+
+    input.addEventListener('change',()=>{
+        const files = Array.from(input.files).slice(0,10);
+        files.forEach((file,index)=>{
+            const img = new Image();
+            img.onload = () => {
+                images[index]=img;
+                drawPreview();
+            };
+            img.src = URL.createObjectURL(file);
+        });
+    });
+
+    chooseContainer.appendChild(btn);
+    chooseContainer.appendChild(input);
+}
+
+function drawPreview(){
+    ctx.clearRect(0,0,canvas.width,canvas.height);
     const cols = 5;
     const rows = 2;
-    const totalWidth = canvas.width;
-    const totalHeight = canvas.height;
-    const cellWidth = totalWidth / cols;
-    const cellHeight = totalHeight / rows;
+    const cellWidth = canvas.width / cols;
+    const cellHeight = canvas.height / rows;
 
-    ctx.clearRect(0,0,totalWidth,totalHeight);
-
-    let loadedCount = 0;
-    files.forEach((file, index) => {
-        const img = new Image();
-        img.onload = () => {
+    images.forEach((img,index)=>{
+        if(img){
             const scale = Math.min(cellWidth / img.width, cellHeight / img.height);
-            const w = img.width * scale;
-            const h = img.height * scale;
-            const x = (index % cols) * cellWidth + (cellWidth - w)/2;
-            const y = Math.floor(index / cols) * cellHeight + (cellHeight - h)/2;
-            ctx.drawImage(img, x, y, w, h);
-
-            loadedCount++;
-            if(loadedCount === files.length){
-                preview.src = canvas.toDataURL("image/jpeg", 0.95);
-                downloadBtn.style.display = "inline-block";
-            }
-        };
-        img.src = URL.createObjectURL(file);
+            const w = img.width*scale;
+            const h = img.height*scale;
+            const x = (index % cols)*cellWidth + (cellWidth - w)/2;
+            const y = Math.floor(index/cols)*cellHeight + (cellHeight - h)/2;
+            ctx.drawImage(img,x,y,w,h);
+        }
     });
-});
 
-downloadBtn.addEventListener('click', () => {
+    preview.src = canvas.toDataURL("image/jpeg",0.95);
+    if(images.some(i=>i!==null)) downloadBtn.style.display='inline-block';
+}
+
+downloadBtn.addEventListener('click',()=>{
     const link = document.createElement('a');
     link.href = canvas.toDataURL("image/jpeg",0.95);
-    link.download = 'merged.jpg';
+    link.download='merged.jpg';
     link.click();
 });
 </script>

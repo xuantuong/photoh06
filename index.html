@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Merge 2×5 Images</title>
+<title>Merge Images Smart Grid</title>
 
 <!-- Favicon & PWA icon -->
 <link rel="icon" href="ico.png" type="image/png">
@@ -45,7 +45,7 @@ input[type=file] { display:none; }
 </head>
 <body>
 
-<h1>🧩 Merge Images H06</h1>
+<h1>🧩 Merge Images Smart Grid</h1>
 
 <div id="chooseContainer"></div>
 <button id="downloadBtn" style="display:none;">💾 Download Merged Image</button>
@@ -60,14 +60,22 @@ const preview = document.getElementById('preview');
 const downloadBtn = document.getElementById('downloadBtn');
 const ctx = canvas.getContext('2d');
 
-const images = new Array(10).fill(null);
-
 // Detect iOS
 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
+// Array to hold images, max 12
+const maxImages = 12;
+const images = new Array(maxImages).fill(null);
+
+// Function to compute grid (rows x cols) for even number of images
+function computeGrid(n){
+    if(n%2!==0) return {rows:1, cols:n}; // odd fallback
+    return {rows:2, cols:n/2};
+}
+
+// iOS: 12 separate file inputs
 if(isIOS){
-    // iOS: 10 separate file inputs
-    for(let i=0;i<10;i++){
+    for(let i=0;i<maxImages;i++){
         const input = document.createElement('input');
         input.type = 'file';
         input.accept = 'image/*';
@@ -99,11 +107,11 @@ if(isIOS){
     input.style.display='none';
 
     const btn = document.createElement('button');
-    btn.textContent = '📂 Choose Images (Max 10)';
+    btn.textContent = '📂 Choose Images (Max 12)';
     btn.addEventListener('click',()=>input.click());
 
     input.addEventListener('change',()=>{
-        const files = Array.from(input.files).slice(0,10);
+        const files = Array.from(input.files).slice(0,maxImages);
         files.forEach((file,index)=>{
             const img = new Image();
             img.onload = () => {
@@ -118,26 +126,30 @@ if(isIOS){
     chooseContainer.appendChild(input);
 }
 
+// Draw preview on canvas
 function drawPreview(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
-    const cols = 5;
-    const rows = 2;
+    const validImages = images.filter(i=>i!==null);
+    const n = validImages.length;
+    if(n===0) return;
+
+    const grid = computeGrid(n);
+    const rows = grid.rows;
+    const cols = grid.cols;
     const cellWidth = canvas.width / cols;
     const cellHeight = canvas.height / rows;
 
-    images.forEach((img,index)=>{
-        if(img){
-            const scale = Math.min(cellWidth / img.width, cellHeight / img.height);
-            const w = img.width*scale;
-            const h = img.height*scale;
-            const x = (index % cols)*cellWidth + (cellWidth - w)/2;
-            const y = Math.floor(index/cols)*cellHeight + (cellHeight - h)/2;
-            ctx.drawImage(img,x,y,w,h);
-        }
+    validImages.forEach((img,index)=>{
+        const scale = Math.min(cellWidth / img.width, cellHeight / img.height);
+        const w = img.width*scale;
+        const h = img.height*scale;
+        const x = (index % cols)*cellWidth + (cellWidth - w)/2;
+        const y = Math.floor(index/cols)*cellHeight + (cellHeight - h)/2;
+        ctx.drawImage(img,x,y,w,h);
     });
 
     preview.src = canvas.toDataURL("image/jpeg",0.95);
-    if(images.some(i=>i!==null)) downloadBtn.style.display='inline-block';
+    if(validImages.length>0) downloadBtn.style.display='inline-block';
 }
 
 downloadBtn.addEventListener('click',()=>{

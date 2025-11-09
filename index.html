@@ -20,7 +20,17 @@ body {
     padding: 20px;
     background: #f0f0f0;
 }
-h1 { text-align: center; color: #4CAF50; }
+h1 { 
+    text-align: center; 
+    color: #4CAF50; 
+    display:flex;
+    align-items:center;
+}
+h1 img { 
+    width:32px; 
+    height:32px; 
+    margin-right:8px; 
+}
 #preview {
     margin-top: 20px;
     border: 2px solid #4CAF50;
@@ -45,7 +55,10 @@ input[type=file] { display:none; }
 </head>
 <body>
 
-<h1>🧩 Merge Images Smart Grid</h1>
+<h1>
+  <img src="h6.png" alt="icon">
+  Merge Images Smart Grid
+</h1>
 
 <div id="chooseContainer"></div>
 <button id="downloadBtn" style="display:none;">💾 Download Merged Image</button>
@@ -60,20 +73,19 @@ const preview = document.getElementById('preview');
 const downloadBtn = document.getElementById('downloadBtn');
 const ctx = canvas.getContext('2d');
 
-// Detect iOS
-const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-// Array to hold images, max 12
 const maxImages = 12;
 const images = new Array(maxImages).fill(null);
+const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-// Function to compute grid (rows x cols) for even number of images
+// Compute grid: 2 rows if even >=4, otherwise 1 row or ceil(n/2)
 function computeGrid(n){
-    if(n%2!==0) return {rows:1, cols:n}; // odd fallback
-    return {rows:2, cols:n/2};
+    if(n<4) return {rows:1, cols:n};
+    if(n%2===0) return {rows:2, cols:n/2};
+    const rows=2, cols=Math.ceil(n/2);
+    return {rows, cols};
 }
 
-// iOS: 12 separate file inputs
+// iOS: 10 separate file inputs
 if(isIOS){
     for(let i=0;i<maxImages;i++){
         const input = document.createElement('input');
@@ -126,7 +138,7 @@ if(isIOS){
     chooseContainer.appendChild(input);
 }
 
-// Draw preview on canvas
+// Draw preview
 function drawPreview(){
     ctx.clearRect(0,0,canvas.width,canvas.height);
     const validImages = images.filter(i=>i!==null);
